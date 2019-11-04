@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, minimal-ui, viewport-fit=cover, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
     <link href="https://fonts.googleapis.com/css?family=Staatliches&display=swap" rel="stylesheet">
-    <title>01. Contrast</title>
+    <title>03. Deep</title>
     <link href="../assets/style.css" rel="stylesheet">
 </head>
 <body>
-    <h1>01. Contrast</h1>
+    <h1>03. Deep</h1>
     		<!-- div that will hold our WebGL canvas -->
     <div id="canvas"></div>
 
     <!-- div used to create our plane -->
     <div class="plane">
         <!-- image that will be used as a texture by our plane -->
-        <img src="montain.jpg" crossorigin="anonymous"/>
+        <img src="texture.jpg" crossorigin="anonymous"/>
     </div>
 
    <!-- vertex shader -->
@@ -61,54 +61,58 @@
         // get our varyings
         varying vec3 vVertexPosition;
         varying vec2 vTextureCoord;
+
         // our texture sampler (default sampler name)
         uniform sampler2D uSampler0;
         uniform float uTime;
         uniform float uIntensity;
         uniform vec2 uMouse;
+        uniform mat4 uTextureMatrix0;
         
         const float pi = 3.14159;
-
-
-        vec4 posterize(vec4 original, float p_step){
-            float dark_value = 0.0;
-            float grey = (original.r + original.g + original.b)/3.0;
-            for(float i = 1.0; i<100.0; i++){
-                if (i >= p_step){break;}
-                dark_value += clamp( step( i/p_step, grey), 0.0 , 1.0/(p_step - 1.0));
-            }
-            return vec4(dark_value,dark_value,dark_value,1.0);
-        }
 
         float remap( float minval, float maxval, float curval )
         {
             return ( curval - minval ) / ( maxval - minval );
         } 
+
+        mat2 rotate2d(float _angle){
+            return mat2(cos(_angle),-sin(_angle),
+                        sin(_angle),cos(_angle));
+        }
         
         void main() {
             // map our texture with the original texture coords
-            vec2 coord = vTextureCoord;
-            vec4 original = texture2D(uSampler0, coord);
+            vec2 uv = vTextureCoord;
 
-            if(vVertexPosition[1] + sin(uTime * 2.0 + vVertexPosition[0]  * 50.0) * 0.01 > uMouse[1]){
-                vec4 shift = texture2D(uSampler0, coord + vec2(1.0) * uIntensity);
-                vec4 diff = posterize(original,5.0)/shift;
+            
 
-                float value = step(0.5,(diff.r + diff.g + diff.b)/3.0);
-                vec4 outline = vec4(value,value,value,1.0);
-                vec4 dark = posterize(original,10.0) * outline;
+            vec2 dir = uMouse - vVertexPosition.xy;
+            dir = (uTextureMatrix0 * vec4(vec2(dir.x,dir.y - 0.4), 0.0, 1.0)).xy;
 
-                vec4 color1 = vec4(48.0/255.0, 18.0/255.0, 45.0/255.0,1.0);
-                vec4 color2 = vec4(239.0/255.0, 71.0/255.0, 58.0/255.0,1.0);
-                vec4 color3 = vec4(255.0/255.0, 255.0/255.0, 79.0/255.0,1.0);  
-
-                if(dark[0] <= 0.6)
-                    gl_FragColor = mix(color1, color2, remap(0.0, 0.6, dark[0]));
-                else
-                    gl_FragColor = mix(color2, color3, remap(0.6, 1.0, dark[0]));
-            }else{
-                gl_FragColor = original;
+            float angle = acos( dot(normalize(vec2(0.5) - (uMouse + 0.5)),normalize(vec2(0.,1.))) );
+            if(uMouse.x < 0.){
+                angle = -angle;
             }
+
+            float intensity = smoothstep(0.0, 0.7,distance(uMouse,vec2(0.0)));
+
+            vec2 rotatedDir = rotate2d( angle + pi/4.) * dir;
+
+            float dist = length(dir);
+            float circle = (remap(-1.0,1.0,dir.x / dist + dir.y / dist));
+            float lightcircle = (remap(-1.0,1.0,rotatedDir.x / dist + rotatedDir.y / dist));
+            float light = ((lightcircle * 0.5 + 0.1) * intensity + (1.0 - intensity))  * smoothstep(0.1,0.3,dist);
+            float holeLight = smoothstep(0.28,0.32,dist);
+            float holeTex = smoothstep(0.0,0.3,dist);
+
+            float pointlight = smoothstep(0.7,1.0,(1.0 - distance(vec2(0.5) ,uv))) * 0.5 + 0.6;
+
+            uv = fract(uv/ (1.0  - (dist * 5.0 * (1.0 - holeTex)) ));
+            vec2 uvTiled = fract(vec2(0,uTime * 0.1) + uv/0.3);
+            vec4 original = texture2D(uSampler0, uvTiled );
+
+            gl_FragColor = original * pointlight * (light * (1.0-holeLight) + holeLight);
         }
     </script>
 
