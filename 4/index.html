@@ -112,10 +112,7 @@
             vec2 uvTiled = fract(vec2(0,uTime * 0.1) + uv/0.3);
             vec4 original = texture2D(uSampler0, uvTiled );
 
-           float mult = pointlight * (light * (1.0-holeLight) + holeLight);
-
-           gl_FragColor = vec4(original.r * mult, original.g * mult, original.b * mult, 1.0);
-           //gl_FragColor = original;
+            gl_FragColor = original * pointlight * (light * (1.0-holeLight) + holeLight);
         }
     </script>
 
