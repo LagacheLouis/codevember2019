@@ -1,0 +1,49 @@
+  .plane .content{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    opacity: 0;
+    transition: opacity .5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+  }
+
+  .plane .content h2,h3{
+    display: block;
+    color: #fff;
+    margin: 0;
+    text-align: center;
+    line-height: 0.9;
+    overflow-y: hidden;
+    height: max-content;
+  }
+
+  .plane .content h2 span{
+    display: block;
+    transform: translateY(100%);
+    transition: transform .5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+  }
+
+  .plane .content.active span{
+    display: block;
+    transform: translateY(0%);
+  }
+
+  .plane .content h2{
+    margin-top: 1vh;
+    font-size: 15vw;
+  }
+  .plane .content h3{
+    font-size: 2vw;
+  }
+  
+  body{
+    cursor: none;
+  }
+
+  .cursor{
+    position: fixed;
+    z-index: 9999999;
+    color: white;
+    font-size: 72px;
+    transform: translate(-50%,-50%);
+  }

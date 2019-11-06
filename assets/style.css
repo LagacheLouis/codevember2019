@@ -9,13 +9,13 @@ body {
     /* hide scrollbars */
     overflow: hidden;
     box-sizing: border-box;
+    font-family: 'Staatliches', cursive;
+    letter-spacing: 2px;
   }
 
   h1{
     color: white;
     text-align: center;
-    font-family: 'Staatliches', cursive;
-    letter-spacing: 2px;
     font-weight: normal;
     font-size: 48px;
   }
@@ -31,6 +31,7 @@ body {
   
   .plane {
     /* define the size of your plane */
+    position: relative;
     width: 80vw;
     height: 80vh;
     margin: 0 auto;
@@ -43,6 +44,9 @@ body {
   .plane img {
     /* hide the img element */
     display: none;
+  }
+  .plane video{
+    visibility: hidden;
   }
   
   /*** in case of error show the image ***/
@@ -58,4 +62,8 @@ body {
     display: block;
     max-width: 100%;
     object-fit: cover;
+  }
+
+  audio{
+    display: none;
   }
