@@ -1,4 +1,5 @@
-  window.onload = function() {
+window.onload = function() {
+  
     let mouse = {x:0, y: 0};
     let smoothedMouse = {x:0, y: 0};
     window.onmousemove = function(e){
