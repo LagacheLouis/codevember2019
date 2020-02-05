@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, minimal-ui, viewport-fit=cover, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link href="https://fonts.googleapis.com/css?family=Staatliches&display=swap" rel="stylesheet">
+    <title>06. Music</title>
+    <link href="../assets/style.css" rel="stylesheet">
+    <link href="player.css" rel="stylesheet">
+</head>
+<body>
+    <h1>06. Music (ft Caravan Palace)</h1>
+    		<!-- div that will hold our WebGL canvas -->
+    <div id="canvas"></div>
+
+    <!-- div used to create our plane -->
+    <div class="plane">
+        <!-- image that will be used as a texture by our plane -->
+        <video autoplay loop muted playsinline>
+            <source src="kid.webm" type="video/webm" />
+        </video>
+        <div class="content">
+            <h3><span>Caravan Palace</span></h3>
+            <h2><span>Plume</span></h2>
+        </div>
+        
+    </div>
+
+   <!-- vertex shader -->
+    <script id="plane-vs" type="x-shader/x-vertex">
+        #ifdef GL_ES
+        precision mediump float;
+        #endif
+
+        // those are the mandatory attributes that the lib sets
+        attribute vec3 aVertexPosition;
+        attribute vec2 aTextureCoord;
+
+        // those are mandatory uniforms that the lib sets and that contain our model view and projection matrix
+        uniform mat4 uMVMatrix;
+        uniform mat4 uPMatrix;
+
+        // our texture matrix uniform (this is the lib default name, but it could be changed)
+        uniform mat4 uTextureMatrix0;
+
+        // if you want to pass your vertex and texture coords to the fragment shader
+        varying vec3 vVertexPosition;
+        varying vec2 vTextureCoord;
+
+        void main() {
+            vec3 vertexPosition = aVertexPosition;
+
+            gl_Position = uPMatrix * uMVMatrix * vec4(vertexPosition, 1.0);
+
+            // set the varyings
+            // thanks to the texture matrix we will be able to calculate accurate texture coords
+            // so that our texture will always fit our plane without being distorted
+            vTextureCoord = (uTextureMatrix0 * vec4(aTextureCoord, 0.0, 1.0)).xy;
+            vVertexPosition = vertexPosition;
+        }
+    </script>
+    <!-- fragment shader -->
+    <script id="plane-fs" type="x-shader/x-fragment">
+        #ifdef GL_ES
+        precision mediump float;
+        #endif
+        // get our varyings
+        varying vec3 vVertexPosition;
+        varying vec2 vTextureCoord;
+
+        // our texture sampler (default sampler name)
+        uniform sampler2D uSampler0;
+        uniform float uTime;
+        uniform float uIntensity;
+        uniform vec2 uMouse;
+        uniform mat4 uTextureMatrix0;
+
+        uniform float uKick;
+        uniform float uVolume;
+        uniform float uBeat;
+        
+        const float pi = 3.14159;
+        const float globalFactor = 2.0;
+
+        vec2 rotateUV(vec2 uv, float rotation)
+        {
+            float mid = 0.5;
+            return vec2(
+                cos(rotation) * (uv.x - mid) + sin(rotation) * (uv.y - mid) + mid,
+                cos(rotation) * (uv.y - mid) - sin(rotation) * (uv.x - mid) + mid
+            );
+        }
+
+        vec2 kuv(vec2 uv, float strength){
+            //https://www.shadertoy.com/view/4sXBRl
+            vec2 kuv = uv;
+            kuv = (kuv - 0.5 * 5000.)/5000.;
+            float phi = abs(atan(kuv.y, kuv.x));
+            float r = length(phi);
+            phi = mod(phi, 0.0);
+
+            kuv = vec2(cos(phi) * r, sin(phi) * r);
+            
+           /* vec2 dir = vec2(0.5) - kuv;
+
+             kuv = kuv + dir * length(dir) * strength;
+             kuv = rotateUV(kuv, uTime * .1);
+             kuv = fract(kuv *  1.);
+                
+             kuv = fract(kuv * sign(kuv - 0.5) - (uTime * 0.1));
+             kuv = fract(kuv * sign(mod(kuv,2.0) - 0.5) * 2.0);*/
+
+
+            vec4 color = texture2D(uSampler0,kuv);
+            return kuv;
+        }
+        
+        void main() {
+            // map our texture with the original texture coords
+            vec2 uv = vTextureCoord;
+            vec2 uvR = kuv(uv, uVolume * (globalFactor));
+            vec2 uvG = kuv(uv, uVolume * (globalFactor + 0.5));
+            vec2 uvB = kuv(uv, uVolume * (globalFactor + 1.));
+
+            float r = texture2D(uSampler0,uvR).r;
+            float g = texture2D(uSampler0,uvG).g;
+            float b = texture2D(uSampler0,uvB).b;
+
+            gl_FragColor = vec4(r,g,b,1.0);
+        }
+    </script>
+    <audio id="audio" preload="none" controls='true'>
+        <source></source>
+    </audio>
+    <div class="cursor">Play</div>
+    <script src="../assets/curtains.min.js"></script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
